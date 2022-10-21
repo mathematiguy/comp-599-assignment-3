@@ -281,3 +281,5 @@ if __name__ == "__main__":
     # run_char_lstm()
     # run_snli_lstm()
     # run_snli_bilstm()
+
+    print("Done!")
