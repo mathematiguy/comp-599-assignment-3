@@ -10,17 +10,8 @@ DOCKER_ARGS ?=
 
 .PHONY: docker docker-push docker-pull enter enter-root
 
-run: data/train.json data/glove/glove.6B.300d.txt
-	${RUN} python code.py
-
-data: data/train.json
-
-data/train.json:
-	unzip a2_code.zip
-
-data/glove/glove.6B.300d.txt:
-	wget https://nlp.stanford.edu/data/glove.6B.zip data/glove
-	unzip data/glove/glove.6B.zip -d data/glove
+run: code.py
+	${RUN} python $<
 
 JUPYTER_PASSWORD ?= jupyter
 JUPYTER_PORT ?= 8888
