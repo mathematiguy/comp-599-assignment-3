@@ -184,7 +184,7 @@ def run_char_rnn():
 
     # code to initialize dataloader, model
 
-    train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
+    # train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
 
 
 def run_char_lstm():
