@@ -69,7 +69,7 @@ class CharSeqDataloader:
 
     def load_text(self, filepath):
         with open(filepath, 'r') as f:
-            return f.read().lower()
+            return f.read()
 
     def get_unique_chars(self, text):
         unique_chars = set(ch for ch in text)
