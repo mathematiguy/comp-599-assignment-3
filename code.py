@@ -175,7 +175,6 @@ def train(model, dataset, lr, out_seq_len, num_epochs):
     for epoch in range(num_epochs):
         for in_seq, out_seq in dataset.get_example():
             # main loop code
-
             n += 1
 
         # print info every X examples
@@ -208,8 +207,9 @@ def run_char_rnn():
 
     # code to initialize dataloader, model
     dataset = CharSeqDataloader(filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size)
-    # model = ''
-    # train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
+
+    model = ''
+    train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
 
 
 def run_char_lstm():
