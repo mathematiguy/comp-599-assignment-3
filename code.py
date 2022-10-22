@@ -57,17 +57,30 @@ def tokens_to_ix(
 
 class CharSeqDataloader:
     def __init__(self, filepath, seq_len, examples_per_epoch):
-        self.unique_chars = ""  # fill in
-        self.vocab_size = ""  # fill in
-        self.mappings = ""  # fill in
-        self.seq_len = ""  # fill in
+        self.text = self.load_text(filepath)
+
+        self.unique_chars = self.get_unique_chars(self.text)
+        self.vocab_size = len(self.unique_chars)
+        self.mappings = self.generate_char_mappings(self.unique_chars)
+        self.seq_len = seq_len
         self.examples_per_epoch = examples_per_epoch
 
         # your code here
 
+    def load_text(self, filepath):
+        with open(filepath, 'r') as f:
+            return f.read()
+
+    def get_unique_chars(self, text):
+        text = text.lower()
+        unique_chars = set(ch for ch in text)
+        return sorted(unique_chars)
+
     def generate_char_mappings(self, uq):
-        # your code here
-        pass
+        return {
+            'idx_to_char': dict(zip(range(len(uq)), uq)),
+            'char_to_idx': dict(zip(uq, range(len(uq)))),
+        }
 
     def convert_seq_to_indices(self, seq):
         # your code here
