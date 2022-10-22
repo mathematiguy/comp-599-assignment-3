@@ -154,8 +154,13 @@ class CharRNN(nn.Module):
         pass
 
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
-        # your code here
-        pass
+        generated_seq = torch.tensor([starting_char])
+        for _ in range(seq_len-1):
+            out, hidden = self.forward(generated_seq)
+            char_probs = F.softmax(out/temp, 1)
+            next_char = Categorical(probs=char_probs[-1]).sample()
+            generated_seq = torch.cat((generated_seq, torch.tensor([next_char])))
+        return generated_seq
 
 
 class CharLSTM(nn.Module):
