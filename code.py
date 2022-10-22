@@ -120,9 +120,9 @@ class CharRNN(nn.Module):
         self.W_ya = nn.Linear(self.hidden_size, self.n_chars, bias=True)
 
     def rnn_cell(self, i, h):
-        a = self.nonlinear(self.W_aa(h) + self.W_ax(i))
-        y = self.nonlinear(self.W_ya(h))
-        return y, h
+        h_new = self.nonlinear(self.W_aa(h) + self.W_ax(i))
+        o = self.nonlinear(self.W_ya(h))
+        return o, h_new
 
     def forward(self, input_seq, hidden=None):
         if hidden is None:
@@ -139,6 +139,11 @@ class CharRNN(nn.Module):
             outputs.append(output)
             hiddens.append(hidden)
 
+        # Stack the outputs
+        out = torch.stack(outputs)
+        hidden_last = hiddens[-1]
+
+        return outputs, hidden_last
 
     def get_loss_function(self):
         # your code here
