@@ -74,7 +74,7 @@ class CharSeqDataloader:
     def get_unique_chars(self, text):
         text = text.lower()
         unique_chars = set(ch for ch in text)
-        return list(unique_chars)
+        return sorted(unique_chars)
 
     def generate_char_mappings(self, uq):
         return {
