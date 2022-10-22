@@ -121,7 +121,7 @@ class CharRNN(nn.Module):
 
     def rnn_cell(self, i, h):
         h_new = self.nonlinear(self.waa(h) + self.wax(i))
-        o = self.nonlinear(self.wya(h))
+        o = self.wya(h)
         return o, h_new
 
     def forward(self, input_seq, hidden=None):
