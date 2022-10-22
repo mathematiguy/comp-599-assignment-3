@@ -184,7 +184,8 @@ def run_char_rnn():
     data_path = "./data/shakespeare.txt"
 
     # code to initialize dataloader, model
-
+    dataset = CharSeqDataloader(filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size)
+    # model = ''
     # train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
 
 
@@ -199,6 +200,8 @@ def run_char_lstm():
     data_path = "./data/shakespeare.txt"
 
     # code to initialize dataloader, model
+    dataset = ''
+    model = ''
 
     train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
 
@@ -278,7 +281,19 @@ def run_snli_bilstm():
 
 
 if __name__ == "__main__":
-    run_char_rnn()
+
+    hidden_size = 512
+    embedding_size = 300
+    seq_len = 100
+    lr = 0.002
+    num_epochs = 100
+    epoch_size = 10  # one epoch is this # of examples
+    out_seq_len = 200
+    data_path = "./data/shakespeare.txt"
+
+    dataset = CharSeqDataloader(filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size)
+
+    # run_char_rnn()
     # run_char_lstm()
     # run_snli_lstm()
     # run_snli_bilstm()
