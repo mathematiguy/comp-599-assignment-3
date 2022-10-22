@@ -82,16 +82,27 @@ class CharSeqDataloader:
         }
 
     def convert_seq_to_indices(self, seq):
-        # your code here
-        pass
+        return [self.mappings['char_to_idx'][ch] for ch in seq]
 
     def convert_indices_to_seq(self, seq):
         # your code here
         pass
 
     def get_example(self):
-        # your code here
-        pass
+        # Choose a start point at random
+        start_idx = random.choice(range(self.num_chars - self.seq_len - 1))
+
+        # Extract text and convert to list of chars
+        in_string = list(self.text[start_idx:start_idx+self.seq_len])
+        target_string = list(self.text[start_idx+1:start_idx+self.seq_len+1])
+
+        # Convert chars to idx sequences
+        in_seq = self.convert_seq_to_indices(in_string)
+        target_seq = self.convert_seq_to_indices(target_string)
+
+        # Return as int tensors
+        yield torch.tensor(in_seq, dtype=torch.int32), \
+            torch.tensor(target_seq, dtype=torch.int32)
 
 
 class CharRNN(nn.Module):
