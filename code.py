@@ -85,8 +85,7 @@ class CharSeqDataloader:
         return [self.mappings['char_to_idx'][ch] for ch in seq]
 
     def convert_indices_to_seq(self, seq):
-        # your code here
-        pass
+        return [self.mappings['idx_to_char'][ix] for ix in seq]
 
     def get_example(self):
         # Choose a start point at random
