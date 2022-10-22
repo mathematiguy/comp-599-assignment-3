@@ -113,7 +113,7 @@ class CharRNN(nn.Module):
 
         # Initialise layers
         self.hidden = torch.zeros(self.hidden_size)
-        self.embed = nn.Embedding(self.n_chars, self.embedding_size)
+        self.embedding_layer = nn.Embedding(self.n_chars, self.embedding_size)
         self.nonlinear = torch.tanh
         self.waa = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
         self.wax = nn.Linear(self.embedding_size, self.hidden_size, bias=False)
@@ -129,7 +129,7 @@ class CharRNN(nn.Module):
             hidden = self.hidden
 
         # Embed the input sequence
-        input_seq = self.embed(input_seq)
+        input_seq = self.embedding_layer(input_seq)
 
         # Generate outputs + hidden states
         outputs = []
