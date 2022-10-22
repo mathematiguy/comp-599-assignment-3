@@ -114,13 +114,12 @@ class CharRNN(nn.Module):
         # Initialise layers
         self.hidden = torch.zeros(self.hidden_size)
         self.embedding_layer = nn.Embedding(self.n_chars, self.embedding_size)
-        self.nonlinear = torch.tanh
-        self.waa = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
-        self.wax = nn.Linear(self.embedding_size, self.hidden_size, bias=False)
+        self.waa = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
+        self.wax = nn.Linear(self.embedding_size, self.hidden_size, bias=True)
         self.wya = nn.Linear(self.hidden_size, self.n_chars, bias=True)
 
     def rnn_cell(self, i, h):
-        h_new = self.nonlinear(self.waa(h) + self.wax(i))
+        h_new = torch.tanh(self.waa(h) + self.wax(i))
         o = self.wya(h)
         return o, h_new
 
