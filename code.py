@@ -143,7 +143,7 @@ class CharRNN(nn.Module):
         out = torch.stack(outputs)
         hidden_last = hiddens[-1]
 
-        return outputs, hidden_last
+        return out, hidden_last
 
     def get_loss_function(self):
         # your code here
