@@ -58,7 +58,7 @@ def tokens_to_ix(
 class CharSeqDataloader:
     def __init__(self, filepath, seq_len, examples_per_epoch):
         self.text = self.load_text(filepath)
-
+        self.num_chars = len(self.text)
         self.unique_chars = self.get_unique_chars(self.text)
         self.vocab_size = len(self.unique_chars)
         self.mappings = self.generate_char_mappings(self.unique_chars)
