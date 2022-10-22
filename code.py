@@ -154,8 +154,9 @@ class CharRNN(nn.Module):
 
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
         generated_seq = torch.tensor([starting_char])
+        hidden = None
         for _ in range(seq_len-1):
-            out, hidden = self.forward(generated_seq)
+            out, hidden = self.forward(generated_seq, hidden=hidden)
             char_probs = F.softmax(out/temp, 1)
             next_char = Categorical(probs=char_probs[-1]).sample()
             generated_seq = torch.cat((generated_seq, torch.tensor([next_char])))
