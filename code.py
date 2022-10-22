@@ -120,7 +120,7 @@ class CharRNN(nn.Module):
 
     def rnn_cell(self, i, h):
         h_new = torch.tanh(self.waa(h) + self.wax(i))
-        o = self.wya(h)
+        o = self.wya(h_new)
         return o, h_new
 
     def forward(self, input_seq, hidden=None):
