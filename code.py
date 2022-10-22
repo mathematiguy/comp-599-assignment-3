@@ -65,8 +65,6 @@ class CharSeqDataloader:
         self.seq_len = seq_len
         self.examples_per_epoch = examples_per_epoch
 
-        # your code here
-
     def load_text(self, filepath):
         with open(filepath, 'r') as f:
             return f.read()
@@ -107,20 +105,40 @@ class CharSeqDataloader:
 class CharRNN(nn.Module):
     def __init__(self, n_chars, embedding_size, hidden_size):
         super(CharRNN, self).__init__()
+
+        # Set hyperparameters
         self.hidden_size = hidden_size
         self.n_chars = n_chars
-
         self.embedding_size = embedding_size
 
-        # your code here
+        # Initialise layers
+        self.hidden = torch.zeros(self.hidden_size)
+        self.embed = nn.Embedding(self.n_chars, self.embedding_size)
+        self.nonlinear = torch.tanh
+        self.W_aa = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
+        self.W_ax = nn.Linear(self.embedding_size, self.hidden_size, bias=False)
+        self.W_ya = nn.Linear(self.hidden_size, self.n_chars, bias=True)
 
     def rnn_cell(self, i, h):
-        # your code here
-        pass
+        a = self.nonlinear(self.W_aa(h) + self.W_ax(i))
+        y = self.nonlinear(self.W_ya(h))
+        return y, h
 
     def forward(self, input_seq, hidden=None):
-        # your code here
-        pass
+        if hidden is None:
+            hidden = self.hidden
+
+        # Embed the input sequence
+        input_seq = self.embed(input_seq)
+
+        # Generate outputs + hidden states
+        outputs = []
+        hiddens = []
+        for i in range(len(input_seq)):
+            output, hidden = self.rnn_cell(input_seq[i, :], hidden)
+            outputs.append(output)
+            hiddens.append(hidden)
+
 
     def get_loss_function(self):
         # your code here
