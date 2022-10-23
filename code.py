@@ -148,7 +148,7 @@ class CharRNN(nn.Module):
         return nn.CrossEntropyLoss()
 
     def get_optimizer(self, lr):
-        return torch.optim.Adam(lr=lr)
+        return torch.optim.Adam(self.parameters(), lr=lr)
 
     # Old rnn_cell based sample_sequence
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
