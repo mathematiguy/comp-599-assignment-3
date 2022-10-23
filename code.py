@@ -152,16 +152,32 @@ class CharRNN(nn.Module):
         # your code here
         pass
 
+    # Old rnn_cell based sample_sequence
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
-        generated_seq = [starting_char]
-        hidden = None
-        for _ in range(seq_len):
-            out, hidden = self.forward(torch.tensor(generated_seq), hidden)
-            char_probs = F.softmax(out[-1]/temp, dim=0)
-            generated_seq.append(
-                Categorical(probs=char_probs).sample().tolist()
-            )
-        return generated_seq
+        generated_seq = torch.tensor([starting_char])
+        embedded = self.embedding_layer(generated_seq)
+        hidden = self.hidden
+
+        # Generate outputs + hidden states
+        for i in range(seq_len):
+            output, hidden = self.rnn_cell(embedded[i,:], hidden)
+            char_probs = F.softmax(output/temp, 0)
+            next_char = Categorical(probs=char_probs).sample()
+            generated_seq = torch.cat((generated_seq, next_char.flatten()))
+            embedded = torch.cat((embedded, self.embedding_layer(next_char).unsqueeze(0)))
+
+        return generated_seq.tolist()
+
+    # def sample_sequence(self, starting_char, seq_len, temp=0.5):
+    #     generated_seq = [starting_char]
+    #     hidden = None
+    #     for _ in range(seq_len):
+    #         out, hidden = self.forward(torch.tensor(generated_seq), hidden)
+    #         char_probs = F.softmax(out[-1]/temp, dim=0)
+    #         generated_seq.append(
+    #             Categorical(probs=char_probs).sample().tolist()
+    #         )
+    #     return generated_seq
 
 
 class CharLSTM(nn.Module):
