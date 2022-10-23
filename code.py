@@ -166,17 +166,6 @@ class CharRNN(nn.Module):
 
         return generated_seq.tolist()
 
-    # def sample_sequence(self, starting_char, seq_len, temp=0.5):
-    #     generated_seq = [starting_char]
-    #     hidden = None
-    #     for _ in range(seq_len):
-    #         out, hidden = self.forward(torch.tensor(generated_seq), hidden)
-    #         char_probs = F.softmax(out[-1]/temp, dim=0)
-    #         generated_seq.append(
-    #             Categorical(probs=char_probs).sample().tolist()
-    #         )
-    #     return generated_seq
-
 
 class CharLSTM(nn.Module):
     def __init__(self, n_chars, embedding_size, hidden_size):
