@@ -145,12 +145,10 @@ class CharRNN(nn.Module):
         return out, hidden_last
 
     def get_loss_function(self):
-        # your code here
-        pass
+        return nn.CrossEntropyLoss()
 
     def get_optimizer(self, lr):
-        # your code here
-        pass
+        return torch.optim.Adam(lr=lr)
 
     # Old rnn_cell based sample_sequence
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
