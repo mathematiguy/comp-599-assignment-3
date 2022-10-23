@@ -236,8 +236,16 @@ class CharLSTM(nn.Module):
         return torch.optim.Adam(self.parameters(), lr=lr)
 
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
-        # your code here
-        pass
+        generated_seq = [starting_char]
+        hidden = None
+        cell = None
+        for _ in range(seq_len):
+            out, hidden, cell = self.forward(torch.tensor(generated_seq), hidden, cell)
+            char_probs = F.softmax(out[-1]/temp, dim=0)
+            generated_seq.append(
+                Categorical(probs=char_probs).sample().tolist()
+            )
+        return generated_seq
 
 
 def train(model, dataset, lr, out_seq_len, num_epochs):
