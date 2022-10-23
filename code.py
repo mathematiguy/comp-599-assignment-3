@@ -154,13 +154,18 @@ class CharRNN(nn.Module):
 
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
         generated_seq = torch.tensor([starting_char])
-        hidden = None
-        for _ in range(seq_len-1):
-            out, hidden = self.forward(generated_seq, hidden=hidden)
-            char_probs = F.softmax(out/temp, 1)
-            next_char = Categorical(probs=char_probs[-1]).sample()
-            generated_seq = torch.cat((generated_seq, torch.tensor([next_char])))
-        return generated_seq
+        embedded = self.embedding_layer(generated_seq)
+        hidden = self.hidden
+
+        # Generate outputs + hidden states
+        for i in range(seq_len-1):
+            output, hidden = self.rnn_cell(embedded[i,:], hidden)
+            char_probs = F.softmax(output/temp, 0)
+            next_char = Categorical(probs=char_probs).sample()
+            generated_seq = torch.cat((generated_seq, next_char.flatten()))
+            embedded = torch.cat((embedded, self.embedding_layer(next_char).unsqueeze(0)))
+
+        return generated_seq.tolist()
 
 
 class CharLSTM(nn.Module):
