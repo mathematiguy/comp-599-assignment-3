@@ -176,7 +176,13 @@ class CharLSTM(nn.Module):
         self.embedding_size = embedding_size
         self.n_chars = n_chars
 
-        #  your code here
+        self.hidden_input_size = self.hidden_size + self.embedding_size
+        self.embedding_layer = nn.Embedding(self.n_chars, self.embedding_size)
+        self.forget_gate = nn.Linear(self.hidden_input_size, self.hidden_size, bias=True)
+        self.input_gate = nn.Linear(self.hidden_input_size, self.hidden_size, bias=True)
+        self.output_gate = nn.Linear(self.hidden_input_size, self.hidden_size, bias=True)
+        self.cell_state_layer = nn.Linear(self.hidden_input_size, self.hidden_size, bias=True)
+        self.fc_output = nn.Linear(self.hidden_size, self.n_chars, bias=True)
 
     def forward(self, input_seq, hidden=None, cell=None):
         # your code here
