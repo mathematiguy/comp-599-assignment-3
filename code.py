@@ -155,7 +155,7 @@ class CharRNN(nn.Module):
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
         generated_seq = [starting_char]
         hidden = None
-        for _ in range(seq_len - 1):
+        for _ in range(seq_len):
             out, hidden = self.forward(torch.tensor(generated_seq), hidden)
             char_probs = F.softmax(out[-1]/temp, dim=0)
             generated_seq.append(
