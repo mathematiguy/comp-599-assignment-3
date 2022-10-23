@@ -189,8 +189,22 @@ class CharLSTM(nn.Module):
         pass
 
     def lstm_cell(self, i, h, c):
-        # your code here
-        pass
+        '''
+        Implement an lstm cell given input, hidden state + cell state
+        '''
+
+        h_i = torch.cat(i, h)
+        forget_gate = torch.sigmoid(self.forget_gate(h_i))
+        input_gate = torch.sigmoid(self.input_gate(h_i))
+        output_gate = torch.sigmoid(self.output_gate(h_i))
+
+        cell_state = torch.tanh(self.cell_state_layer(h_i))
+        c_new = forget_gate * c + input_gate * cell_state
+
+        h_new = output_gate * torch.tanh(c_new)
+        o = self.fc_output(h_new)
+
+        return o, h_new, c_new
 
     def get_loss_function(self):
         # your code here
