@@ -185,8 +185,31 @@ class CharLSTM(nn.Module):
         self.fc_output = nn.Linear(self.hidden_size, self.n_chars, bias=True)
 
     def forward(self, input_seq, hidden=None, cell=None):
-        # your code here
-        pass
+        # Initialise hidden + cell state
+        if hidden == None:
+            hidden = torch.zeros(self.hidden_size)
+        if cell == None:
+            cell = torch.zeros(self.hidden_size)
+
+        # Embed the input sequence
+        input_seq = self.embedding_layer(input_seq)
+
+        # Generate outputs + hidden + cell states
+        outputs = []
+        hiddens = []
+        cells = []
+        for i in range(len(input_seq)):
+            output, hidden, cell = self.lstm_cell(input_seq[i, :], hidden, cell)
+            outputs.append(output)
+            hiddens.append(hidden)
+            cells.append(cell)
+
+        # Shape the outputs
+        out_seq = torch.stack(outputs)
+        hidden_last = hiddens[-1]
+        cell_last = cells[-1]
+
+        return out_seq, hidden_last, cell_last
 
     def lstm_cell(self, i, h, c):
         '''
