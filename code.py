@@ -332,8 +332,8 @@ def run_char_lstm():
     data_path = "./data/shakespeare.txt"
 
     # code to initialize dataloader, model
-    dataset = ''
-    model = ''
+    dataset = CharSeqDataloader(filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size)
+    model = CharLSTM(n_chars=len(dataset.unique_chars), embedding_size=embedding_size, hidden_size=hidden_size)
 
     train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
 
