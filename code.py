@@ -193,7 +193,7 @@ class CharLSTM(nn.Module):
         Implement an lstm cell given input, hidden state + cell state
         '''
 
-        h_i = torch.cat(i, h)
+        h_i = torch.cat((i, h))
         forget_gate = torch.sigmoid(self.forget_gate(h_i))
         input_gate = torch.sigmoid(self.input_gate(h_i))
         output_gate = torch.sigmoid(self.output_gate(h_i))
