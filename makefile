@@ -13,6 +13,10 @@ DOCKER_ARGS ?=
 run: code.py
 	${RUN} python $<
 
+data/glove/glove.6B.300d.txt:
+	wget https://nlp.stanford.edu/data/glove.6B.zip -P data/glove
+	unzip data/glove/glove.6B.zip -d data/glove
+
 JUPYTER_PASSWORD ?= jupyter
 JUPYTER_PORT ?= 8888
 .PHONY: jupyter
