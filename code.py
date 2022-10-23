@@ -1,4 +1,6 @@
 import pdb
+import re
+from collections import Counter
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -200,12 +202,33 @@ class CharLSTM(nn.Module):
 def train(model, dataset, lr, out_seq_len, num_epochs):
 
     # code to initialize optimizer, loss function
+    optimizer = model.get_optimizer(lr=lr)
+    loss_func = model.get_loss_function()
+
+    starting_chars, starting_char_counts = zip(*Counter([ch for ch in dataset.text if re.match('[A-Z]', ch)]).items())
 
     n = 0
     running_loss = 0
     for epoch in range(num_epochs):
         for in_seq, out_seq in dataset.get_example():
-            # main loop code
+            # 1. Apply the RNN to the incoming sequence
+            pred_seq, hidden = model.forward(in_seq)
+
+            # 2. Use the loss function to calculate the loss on the model’s output
+            current_loss = loss_func(pred_seq, out_seq.long())
+
+            # 3. Zero the gradients of the optimizer
+            optimizer.zero_grad()
+
+            # 4. Perform a backward pass (calling .backward())
+            current_loss.backward()
+
+            # 5. Step the weights of the model via the optimizer (.step())
+            optimizer.step()
+
+            # 6. Add the current loss to the running loss
+            running_loss += current_loss
+
             n += 1
 
         # print info every X examples
@@ -214,9 +237,11 @@ def train(model, dataset, lr, out_seq_len, num_epochs):
         print("\n-------------SAMPLE FROM MODEL-------------")
 
         # code to sample a sequence from your model randomly
-
         with torch.no_grad():
-            pass
+            starting_char = random.choices(starting_chars, weights=starting_char_counts, k=1)
+            starting_char = dataset.convert_seq_to_indices(starting_char)[0]
+            generated_seq = model.sample_sequence(starting_char, out_seq_len, temp=0.9)
+            print(''.join(dataset.convert_indices_to_seq(generated_seq)))
 
         print("\n------------/SAMPLE FROM MODEL/------------")
 
