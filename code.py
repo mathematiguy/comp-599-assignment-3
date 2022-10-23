@@ -264,7 +264,7 @@ def train(model, dataset, lr, out_seq_len, num_epochs):
     for epoch in range(num_epochs):
         for in_seq, out_seq in dataset.get_example():
             # 1. Apply the RNN to the incoming sequence
-            pred_seq, hidden = model.forward(in_seq)
+            pred_seq, *_ = model.forward(in_seq)
 
             # 2. Use the loss function to calculate the loss on the model’s output
             current_loss = loss_func(pred_seq, out_seq.long())
