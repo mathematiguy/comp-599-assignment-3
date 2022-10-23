@@ -230,12 +230,10 @@ class CharLSTM(nn.Module):
         return o, h_new, c_new
 
     def get_loss_function(self):
-        # your code here
-        pass
+        return nn.CrossEntropyLoss()
 
     def get_optimizer(self, lr):
-        # your code here
-        pass
+        return torch.optim.Adam(self.parameters(), lr=lr)
 
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
         # your code here
