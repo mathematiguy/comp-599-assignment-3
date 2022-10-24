@@ -343,7 +343,22 @@ def fix_padding(batch_premises, batch_hypotheses):
 
 
 def create_embedding_matrix(word_index, emb_dict, emb_dim):
-    pass
+    ix_to_word = {v: k for k,v in word_index.items()}
+
+    # Convert numpy tensors to pytorch and initialize as zero if missing
+    for word, ix in word_index.items():
+        try:
+            emb_dict[word] = torch.tensor(emb_dict[word])
+        except KeyError:
+            emb_dict[word] = torch.zeros(emb_dim)
+
+    embeds = [torch.tensor(emb_dict[ix_to_word[i]]) for i in range(len(word_index))]
+
+    map_check = all([torch.equal(embeds[word_index[word]], emb_dict[word]) for word, ix in word_index.items()])
+    assert map_check, "embeddings locations don't match the given index map"
+
+    return torch.stack(embeds)
+
 
 
 def evaluate(model, dataloader, index_map):
