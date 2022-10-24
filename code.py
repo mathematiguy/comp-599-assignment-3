@@ -369,11 +369,11 @@ def fix_padding(batch_premises, batch_hypotheses):
     batch_premises = [torch.tensor(premise) for premise in batch_premises]
     batch_hypotheses = [torch.tensor(hypothesis) for hypothesis in batch_hypotheses]
 
-    batch_premises = pad_sequence(batch_premises, batch_first=True)
-    batch_hypotheses = pad_sequence(batch_hypotheses, batch_first=True)
-
     batch_premises_reversed = [toks.flip(dims=(0,)) for toks in batch_premises]
     batch_hypotheses_reversed = [toks.flip(dims=(0,)) for toks in batch_hypotheses]
+
+    batch_premises = pad_sequence(batch_premises, batch_first=True)
+    batch_hypotheses = pad_sequence(batch_hypotheses, batch_first=True)
 
     batch_premises_reversed = pad_sequence(batch_premises_reversed, batch_first=False)
     batch_hypotheses_reversed = pad_sequence(batch_hypotheses_reversed, batch_first=False)
