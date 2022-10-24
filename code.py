@@ -348,9 +348,9 @@ def create_embedding_matrix(word_index, emb_dict, emb_dim):
     # Convert numpy tensors to pytorch and initialize as zero if missing
     for word, ix in word_index.items():
         try:
-            emb_dict[word] = torch.tensor(emb_dict[word])
+            emb_dict[word] = torch.tensor(emb_dict[word], dtype=torch.float32)
         except KeyError:
-            emb_dict[word] = torch.zeros(emb_dim)
+            emb_dict[word] = torch.zeros(emb_dim, dtype=torch.float32)
 
     embeds = [torch.tensor(emb_dict[ix_to_word[i]]) for i in range(len(word_index))]
 
