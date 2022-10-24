@@ -34,3 +34,6 @@ RUN update-alternatives --install /usr/local/bin/pip3 pip3 /usr/local/bin/pip${P
 RUN pip3 install --upgrade pip
 COPY requirements.txt /root/requirements.txt
 RUN pip3 install -r /root/requirements.txt
+
+# Set env variables
+ENV HF_DATASETS_CACHE /home/user/.cache
