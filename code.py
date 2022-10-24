@@ -10,6 +10,7 @@ from collections import Counter
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.utils.rnn import pad_sequence
 from torch.distributions import Categorical
 
 from datasets import load_dataset
@@ -364,7 +365,15 @@ def run_char_lstm():
 
 
 def fix_padding(batch_premises, batch_hypotheses):
-    pdb.set_trace()
+
+    batch_premises = pad_sequence(batch_premises, batch_first=True)
+    batch_hypotheses = pad_sequence(batch_hypotheses, batch_first=True)
+
+    batch_premises_reversed = [toks.flip(dims=(0,)) for toks in batch_premises]
+    batch_hypotheses_reversed = [toks.flip(dims=(0,)) for toks in batch_hypotheses]
+
+    batch_premises_reversed = pad_sequence(batch_premises_reversed, batch_first=False)
+    batch_hypotheses_reversed = pad_sequence(batch_hypotheses_reversed, batch_first=False)
 
     return (
         batch_premises,
