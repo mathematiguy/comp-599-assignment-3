@@ -375,8 +375,8 @@ def fix_padding(batch_premises, batch_hypotheses):
     batch_premises = pad_sequence(batch_premises, batch_first=True)
     batch_hypotheses = pad_sequence(batch_hypotheses, batch_first=True)
 
-    batch_premises_reversed = pad_sequence(batch_premises_reversed, batch_first=False)
-    batch_hypotheses_reversed = pad_sequence(batch_hypotheses_reversed, batch_first=False)
+    batch_premises_reversed = pad_sequence(batch_premises_reversed, batch_first=True)
+    batch_hypotheses_reversed = pad_sequence(batch_hypotheses_reversed, batch_first=True)
 
     return (
         batch_premises,
