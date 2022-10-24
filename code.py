@@ -3,6 +3,8 @@ import re
 import random
 import numpy as np
 import pandas as pd
+
+from itertools import islice
 from collections import Counter
 
 import torch
@@ -71,7 +73,7 @@ class CharSeqDataloader:
         self.examples_per_epoch = examples_per_epoch
 
     def load_text(self, filepath):
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             return f.read()
 
     def get_unique_chars(self, text):
@@ -80,31 +82,32 @@ class CharSeqDataloader:
 
     def generate_char_mappings(self, uq):
         return {
-            'idx_to_char': dict(zip(range(len(uq)), uq)),
-            'char_to_idx': dict(zip(uq, range(len(uq)))),
+            "idx_to_char": dict(zip(range(len(uq)), uq)),
+            "char_to_idx": dict(zip(uq, range(len(uq)))),
         }
 
     def convert_seq_to_indices(self, seq):
-        return [self.mappings['char_to_idx'][ch] for ch in seq]
+        return [self.mappings["char_to_idx"][ch] for ch in seq]
 
     def convert_indices_to_seq(self, seq):
-        return [self.mappings['idx_to_char'][ix] for ix in seq]
+        return [self.mappings["idx_to_char"][ix] for ix in seq]
 
     def get_example(self):
         # Choose a start point at random
         start_idx = random.choice(range(self.num_chars - self.seq_len - 1))
 
         # Extract text and convert to list of chars
-        in_string = list(self.text[start_idx:start_idx+self.seq_len])
-        target_string = list(self.text[start_idx+1:start_idx+self.seq_len+1])
+        in_string = list(self.text[start_idx : start_idx + self.seq_len])
+        target_string = list(self.text[start_idx + 1 : start_idx + self.seq_len + 1])
 
         # Convert chars to idx sequences
         in_seq = self.convert_seq_to_indices(in_string)
         target_seq = self.convert_seq_to_indices(target_string)
 
         # Return as int tensors
-        yield torch.tensor(in_seq, dtype=torch.int32), \
-            torch.tensor(target_seq, dtype=torch.int32)
+        yield torch.tensor(in_seq, dtype=torch.int32), torch.tensor(
+            target_seq, dtype=torch.int32
+        )
 
 
 class CharRNN(nn.Module):
@@ -163,11 +166,13 @@ class CharRNN(nn.Module):
 
         # Generate outputs + hidden states
         for i in range(seq_len):
-            output, hidden = self.rnn_cell(embedded[i,:], hidden)
-            char_probs = F.softmax(output/temp, 0)
+            output, hidden = self.rnn_cell(embedded[i, :], hidden)
+            char_probs = F.softmax(output / temp, 0)
             next_char = Categorical(probs=char_probs).sample()
             generated_seq = torch.cat((generated_seq, next_char.flatten()))
-            embedded = torch.cat((embedded, self.embedding_layer(next_char).unsqueeze(0)))
+            embedded = torch.cat(
+                (embedded, self.embedding_layer(next_char).unsqueeze(0))
+            )
 
         return generated_seq.tolist()
 
@@ -181,10 +186,16 @@ class CharLSTM(nn.Module):
 
         self.hidden_input_size = self.hidden_size + self.embedding_size
         self.embedding_layer = nn.Embedding(self.n_chars, self.embedding_size)
-        self.forget_gate = nn.Linear(self.hidden_input_size, self.hidden_size, bias=True)
+        self.forget_gate = nn.Linear(
+            self.hidden_input_size, self.hidden_size, bias=True
+        )
         self.input_gate = nn.Linear(self.hidden_input_size, self.hidden_size, bias=True)
-        self.output_gate = nn.Linear(self.hidden_input_size, self.hidden_size, bias=True)
-        self.cell_state_layer = nn.Linear(self.hidden_input_size, self.hidden_size, bias=True)
+        self.output_gate = nn.Linear(
+            self.hidden_input_size, self.hidden_size, bias=True
+        )
+        self.cell_state_layer = nn.Linear(
+            self.hidden_input_size, self.hidden_size, bias=True
+        )
         self.fc_output = nn.Linear(self.hidden_size, self.n_chars, bias=True)
 
     def forward(self, input_seq, hidden=None, cell=None):
@@ -215,9 +226,9 @@ class CharLSTM(nn.Module):
         return out_seq, hidden_last, cell_last
 
     def lstm_cell(self, i, h, c):
-        '''
+        """
         Implement an lstm cell given input, hidden state + cell state
-        '''
+        """
 
         h_i = torch.cat((i, h))
         forget_gate = torch.sigmoid(self.forget_gate(h_i))
@@ -244,10 +255,8 @@ class CharLSTM(nn.Module):
         cell = None
         for _ in range(seq_len):
             out, hidden, cell = self.forward(torch.tensor(generated_seq), hidden, cell)
-            char_probs = F.softmax(out[-1]/temp, dim=0)
-            generated_seq.append(
-                Categorical(probs=char_probs).sample().tolist()
-            )
+            char_probs = F.softmax(out[-1] / temp, dim=0)
+            generated_seq.append(Categorical(probs=char_probs).sample().tolist())
         return generated_seq
 
 
@@ -257,7 +266,9 @@ def train(model, dataset, lr, out_seq_len, num_epochs):
     optimizer = model.get_optimizer(lr=lr)
     loss_func = model.get_loss_function()
 
-    starting_chars, starting_char_counts = zip(*Counter([ch for ch in dataset.text if re.match('[A-Z]', ch)]).items())
+    starting_chars, starting_char_counts = zip(
+        *Counter([ch for ch in dataset.text if re.match("[A-Z]", ch)]).items()
+    )
 
     n = 0
     running_loss = 0
@@ -290,10 +301,12 @@ def train(model, dataset, lr, out_seq_len, num_epochs):
 
         # code to sample a sequence from your model randomly
         with torch.no_grad():
-            starting_char = random.choices(starting_chars, weights=starting_char_counts, k=1)
+            starting_char = random.choices(
+                starting_chars, weights=starting_char_counts, k=1
+            )
             starting_char = dataset.convert_seq_to_indices(starting_char)[0]
             generated_seq = model.sample_sequence(starting_char, out_seq_len, temp=0.9)
-            print(''.join(dataset.convert_indices_to_seq(generated_seq)))
+            print("".join(dataset.convert_indices_to_seq(generated_seq)))
 
         print("\n------------/SAMPLE FROM MODEL/------------")
 
@@ -314,8 +327,14 @@ def run_char_rnn():
     data_path = "./data/shakespeare.txt"
 
     # code to initialize dataloader, model
-    dataset = CharSeqDataloader(filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size)
-    model = CharRNN(n_chars=len(dataset.unique_chars), embedding_size=embedding_size, hidden_size=hidden_size)
+    dataset = CharSeqDataloader(
+        filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size
+    )
+    model = CharRNN(
+        n_chars=len(dataset.unique_chars),
+        embedding_size=embedding_size,
+        hidden_size=hidden_size,
+    )
 
     # Train the model
     train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
@@ -332,18 +351,31 @@ def run_char_lstm():
     data_path = "./data/shakespeare.txt"
 
     # code to initialize dataloader, model
-    dataset = CharSeqDataloader(filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size)
-    model = CharLSTM(n_chars=len(dataset.unique_chars), embedding_size=embedding_size, hidden_size=hidden_size)
+    dataset = CharSeqDataloader(
+        filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size
+    )
+    model = CharLSTM(
+        n_chars=len(dataset.unique_chars),
+        embedding_size=embedding_size,
+        hidden_size=hidden_size,
+    )
 
     train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
 
 
 def fix_padding(batch_premises, batch_hypotheses):
-    pass  # your code here
+    pdb.set_trace()
+
+    return (
+        batch_premises,
+        batch_hypotheses,
+        batch_premises_reversed,
+        batch_hypotheses_reversed,
+    )
 
 
 def create_embedding_matrix(word_index, emb_dict, emb_dim):
-    ix_to_word = {v: k for k,v in word_index.items()}
+    ix_to_word = {v: k for k, v in word_index.items()}
 
     # Convert numpy tensors to pytorch and initialize as zero if missing
     for word, ix in word_index.items():
@@ -355,7 +387,6 @@ def create_embedding_matrix(word_index, emb_dict, emb_dim):
     embeds = [torch.tensor(emb_dict[ix_to_word[i]]) for i in range(len(word_index))]
 
     return torch.stack(embeds)
-
 
 
 def evaluate(model, dataloader, index_map):
@@ -376,7 +407,7 @@ class UniLSTM(nn.Module):
         self.embedding_layer = nn.Embedding(vocab_size, hidden_dim, padding_idx=0)
 
     def forward(self, a, b):
-        pass  # your code here
+        pass
 
 
 class ShallowBiLSTM(nn.Module):
@@ -394,23 +425,68 @@ class ShallowBiLSTM(nn.Module):
 
 
 def run_snli(model):
+
+    # Set hyperparameters
+    num_layers = 1
+    num_classes = 3
+    num_epochs = 10
+
     dataset = load_dataset("snli")
     glove = pd.read_csv(
-        "./data/glove.6B.100d.txt", sep=" ", quoting=3, header=None, index_col=0
+        "./data/glove/glove.6B.50d.txt", sep=" ", quoting=3, header=None, index_col=0
     )
 
-    glove_embeddings = ""  # fill in your code
+    # The glove embeddings are just the numpy array of the dataframe
+    glove_embeddings = glove.values
 
+    # The embedding dimension is the width of the glove table
+    emb_dim = glove.shape[1]
+
+    # Create embeddings dict map
+    emb_dict = {word: glove_embeddings[i, :] for i, word in enumerate(glove.index)}
+
+    # Filter data points with missing labels
     train_filtered = dataset["train"].filter(lambda ex: ex["label"] != -1)
     valid_filtered = dataset["validation"].filter(lambda ex: ex["label"] != -1)
     test_filtered = dataset["test"].filter(lambda ex: ex["label"] != -1)
 
-    # code to make dataloaders
+    # Create dataloaders
+    dataloader_train = DataLoader(list(islice(train_filtered, 100)), batch_size=10)
+    dataloader_valid = DataLoader(valid_filtered)
+    dataloader_test = DataLoader(test_filtered)
 
+    # code to make dataloaders
+    print("Creating word_counts..")
     word_counts = build_word_counts(dataloader_train)
+    print("Creating index_map..")
     index_map = build_index_map(word_counts)
 
     # training code
+    embedding_matrix = create_embedding_matrix(index_map, emb_dict, emb_dim)
+
+    model = UniLSTM(
+        vocab_size=len(word_counts),
+        hidden_dim=emb_dim,
+        num_layers=num_layers,
+        num_classes=num_classes,
+    )
+
+    for epoch in range(num_epochs):
+        for batch in dataloader_train:
+            premise, hypothesis, label = batch.values()
+            premise = tokenize(premise)
+            hypothesis = tokenize(hypothesis)
+
+            batch_premise = [tokens_to_ix(premise, index_map)]
+            batch_hypothesis = [tokens_to_ix(hypothesis, index_map)]
+
+            batch_premises, batch_hypotheses, batch_premises_reversed, batch_hypotheses_reversed = fix_padding(
+                batch_premises, batch_hypotheses
+            )
+            premise_embeds = [
+                fix_padding([embedding_matrix[tok] for tok in premise])
+                for premise in premise_tokens
+            ]
 
 
 def run_snli_lstm():
@@ -429,9 +505,9 @@ def run_snli_bilstm():
 
 if __name__ == "__main__":
 
-    run_char_rnn()
+    # run_char_rnn()
     # run_char_lstm()
-    # run_snli_lstm()
+    run_snli_lstm()
     # run_snli_bilstm()
 
     print("Done!")
