@@ -354,9 +354,6 @@ def create_embedding_matrix(word_index, emb_dict, emb_dim):
 
     embeds = [torch.tensor(emb_dict[ix_to_word[i]]) for i in range(len(word_index))]
 
-    map_check = all([torch.equal(embeds[word_index[word]], emb_dict[word]) for word, ix in word_index.items()])
-    assert map_check, "embeddings locations don't match the given index map"
-
     return torch.stack(embeds)
 
 
