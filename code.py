@@ -451,7 +451,24 @@ class ShallowBiLSTM(nn.Module):
         self.embedding_layer = nn.Embedding(vocab_size, hidden_dim, padding_idx=0)
 
     def forward(self, a, b):
-        pass  # your code here
+
+        a, b, a_rev, b_rev = fix_padding(a, b)
+        a_embed = self.embedding_layer(a)
+        b_embed = self.embedding_layer(b)
+        a_rev_embed = self.embedding_layer(a_rev)
+        b_rev_embed = self.embedding_layer(b_rev)
+
+        a_lstm_output, (a_lstm_h, a_lstm_c) = self.lstm_forward(a_embed)
+        b_lstm_output, (b_lstm_h, b_lstm_c) = self.lstm_forward(b_embed)
+
+        a_rev_lstm_output, (a_rev_lstm_h, a_rev_lstm_c) = self.lstm_backward(a_rev_embed)
+        b_rev_lstm_output, (b_rev_lstm_h, b_rev_lstm_c) = self.lstm_backward(b_rev_embed)
+
+        cell_states = torch.cat((a_lstm_c, a_rev_lstm_c, b_lstm_c, b_rev_lstm_c), dim=2).squeeze(dim=0)
+        int_output = nn.ReLU()(self.int_layer(cell_states))
+        output = self.out_layer(int_output)
+
+        return output
 
 
 def run_snli(model):
