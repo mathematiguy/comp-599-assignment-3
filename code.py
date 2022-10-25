@@ -430,7 +430,7 @@ class UniLSTM(nn.Module):
         b_lstm_output, (b_lstm_h, b_lstm_c) = self.lstm(b_embed)
 
         ab_cat = torch.cat((a_lstm_c, b_lstm_c), dim=2)
-        ab_int = self.int_layer(ab_cat)
+        ab_int = nn.ReLU()(self.int_layer(ab_cat))
         ab_out = self.out_layer(ab_int)
 
         return ab_out
