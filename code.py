@@ -444,7 +444,11 @@ class ShallowBiLSTM(nn.Module):
         self.vocab_size = vocab_size
         self.num_layers = num_layers
 
-        # your code here
+        self.lstm_forward = nn.LSTM(hidden_dim, hidden_dim, num_layers, batch_first=True)
+        self.lstm_backward = nn.LSTM(hidden_dim, hidden_dim, num_layers, batch_first=True)
+        self.int_layer = nn.Linear(hidden_dim * 2, hidden_dim)
+        self.out_layer = nn.Linear(hidden_dim, num_classes)
+        self.embedding_layer = nn.Embedding(vocab_size, hidden_dim, padding_idx=0)
 
     def forward(self, a, b):
         pass  # your code here
