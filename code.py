@@ -420,11 +420,8 @@ class UniLSTM(nn.Module):
 
     def forward(self, a, b):
 
-        if not isinstance(a, torch.Tensor):
-            a = torch.Tensor(a)
-
-        if not isinstance(b, torch.Tensor):
-            b = torch.Tensor(b)
+        a = torch.tensor(a, dtype=torch.int32)
+        b = torch.tensor(b, dtype=torch.int32)
 
         a_embed = self.embedding_layer(a)
         b_embed = self.embedding_layer(b)
