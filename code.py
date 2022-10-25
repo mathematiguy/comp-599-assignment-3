@@ -419,6 +419,13 @@ class UniLSTM(nn.Module):
         self.embedding_layer = nn.Embedding(vocab_size, hidden_dim, padding_idx=0)
 
     def forward(self, a, b):
+
+        if not isinstance(a, torch.Tensor):
+            a = torch.Tensor(a)
+
+        if not isinstance(b, torch.Tensor):
+            b = torch.Tensor(b)
+
         a_embed = self.embedding_layer(a)
         b_embed = self.embedding_layer(b)
 
@@ -487,7 +494,7 @@ def run_snli(model):
     embedding_matrix = create_embedding_matrix(index_map, emb_dict, emb_dim)
 
     model = UniLSTM(
-        vocab_size=len(word_counts),
+        vocab_size=len(index_map),
         hidden_dim=emb_dim,
         num_layers=num_layers,
         num_classes=num_classes,
