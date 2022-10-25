@@ -392,7 +392,7 @@ def create_embedding_matrix(word_index, emb_dict, emb_dim):
     # Convert numpy tensors to pytorch and initialize as zero if missing
     for word, ix in word_index.items():
         try:
-            emb_dict[word] = np.array(emb_dict[word])
+            emb_dict[word] = emb_dict[word]
         except KeyError:
             emb_dict[word] = np.zeros(emb_dim)
 
