@@ -413,13 +413,23 @@ class UniLSTM(nn.Module):
         self.vocab_size = vocab_size
         self.num_layers = num_layers
 
-        self.lstm = nn.LSTM(vocab_size, hidden_dim, num_layers, batch_first=True)
+        self.lstm = nn.LSTM(hidden_dim, hidden_dim, num_layers, batch_first=True)
         self.int_layer = nn.Linear(hidden_dim * 2, hidden_dim)
         self.out_layer = nn.Linear(hidden_dim, num_classes)
         self.embedding_layer = nn.Embedding(vocab_size, hidden_dim, padding_idx=0)
 
     def forward(self, a, b):
-        pass
+        a_embed = self.embedding_layer(a)
+        b_embed = self.embedding_layer(b)
+
+        a_lstm_output, (a_lstm_h, a_lstm_c) = self.lstm(a_embed)
+        b_lstm_output, (b_lstm_h, b_lstm_c) = self.lstm(b_embed)
+
+        ab_cat = torch.cat((a_lstm_c, b_lstm_c), dim=2)
+        ab_int = self.int_layer(ab_cat)
+        ab_out = self.out_layer(ab_int)
+
+        return ab_out
 
 
 class ShallowBiLSTM(nn.Module):
