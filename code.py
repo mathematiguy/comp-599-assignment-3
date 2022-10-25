@@ -420,8 +420,7 @@ class UniLSTM(nn.Module):
 
     def forward(self, a, b):
 
-        a = torch.tensor(a, dtype=torch.int32)
-        b = torch.tensor(b, dtype=torch.int32)
+        a, b, a_rev, b_rev = fix_padding(a, b)
 
         a_embed = self.embedding_layer(a)
         b_embed = self.embedding_layer(b)
