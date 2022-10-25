@@ -402,7 +402,30 @@ def create_embedding_matrix(word_index, emb_dict, emb_dim):
 
 
 def evaluate(model, dataloader, index_map):
-    pass
+
+    num_datapoints = 0
+    num_correct = 0
+    with torch.no_grad():
+        for batch in dataloader:
+             premises, hypotheses, labels = batch.values()
+             premises = tokenize(premises)
+             hypotheses = tokenize(hypotheses)
+
+             batch_premises = tokens_to_ix(premises, index_map)
+             batch_hypotheses = tokens_to_ix(hypotheses, index_map)
+
+             # 1. Apply the RNN to the incoming sequence
+             try:
+                 predictions = model.forward(batch_premises, batch_hypotheses)
+             except RuntimeError:
+                 pdb.set_trace()
+
+             # 2. Count the correct labels
+             predicted_labels = torch.argmax(predictions, axis=1)
+             num_correct += torch.sum(predicted_labels == labels).tolist()
+             num_datapoints += labels.shape[0]
+
+    return num_correct / num_datapoints
 
 
 class UniLSTM(nn.Module):
