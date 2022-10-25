@@ -457,6 +457,12 @@ class UniLSTM(nn.Module):
 
         return ab_out
 
+    def get_loss_function(self):
+        return nn.CrossEntropyLoss()
+
+    def get_optimizer(self, lr):
+        return torch.optim.Adam(self.parameters(), lr=lr)
+
 
 class ShallowBiLSTM(nn.Module):
     def __init__(self, vocab_size, hidden_dim, num_layers, num_classes):
@@ -492,6 +498,11 @@ class ShallowBiLSTM(nn.Module):
 
         return output
 
+    def get_loss_function(self):
+        return nn.CrossEntropyLoss()
+
+    def get_optimizer(self, lr):
+        return torch.optim.Adam(self.parameters(), lr=lr)
 
 def run_snli(model):
 
@@ -516,13 +527,13 @@ def run_snli(model):
 
     # Filter data points with missing labels
     train_filtered = dataset["train"].filter(lambda ex: ex["label"] != -1)
-    valid_filtered = dataset["validation"].filter(lambda ex: ex["label"] != -1)
+    valid_filtered = dataset["validation"].filter(lambda ex: ex["label"] != -1).filter(lambda ex: len(ex["premise"]) > 0)
     test_filtered = dataset["test"].filter(lambda ex: ex["label"] != -1)
 
     # Create dataloaders
     dataloader_train = DataLoader(list(islice(train_filtered, 100)), batch_size=10)
-    dataloader_valid = DataLoader(valid_filtered)
-    dataloader_test = DataLoader(test_filtered)
+    dataloader_valid = DataLoader(valid_filtered, batch_size=10)
+    dataloader_test = DataLoader(test_filtered, batch_size=10)
 
     # code to make dataloaders
     print("Creating word_counts..")
@@ -540,22 +551,45 @@ def run_snli(model):
         num_classes=num_classes,
     )
 
+    lr = 0.001
+
+    # code to initialize optimizer, loss function
+    optimizer = model.get_optimizer(lr=lr)
+    loss_func = model.get_loss_function()
+
+    n = 0
+    running_loss = 0
     for epoch in range(num_epochs):
         for batch in dataloader_train:
-            premise, hypothesis, label = batch.values()
-            premise = tokenize(premise)
-            hypothesis = tokenize(hypothesis)
+            premises, hypotheses, labels = batch.values()
+            premises = tokenize(premises)
+            hypotheses = tokenize(hypotheses)
 
-            batch_premise = [tokens_to_ix(premise, index_map)]
-            batch_hypothesis = [tokens_to_ix(hypothesis, index_map)]
+            batch_premises = tokens_to_ix(premises, index_map)
+            batch_hypotheses = tokens_to_ix(hypotheses, index_map)
 
-            batch_premises, batch_hypotheses, batch_premises_reversed, batch_hypotheses_reversed = fix_padding(
-                batch_premises, batch_hypotheses
-            )
-            premise_embeds = [
-                fix_padding([embedding_matrix[tok] for tok in premise])
-                for premise in premise_tokens
-            ]
+            # 1. Apply the RNN to the incoming sequence
+            predictions = model.forward(batch_premises, batch_hypotheses)
+
+            # 2. Use the loss function to calculate the loss on the model’s output
+            current_loss = loss_func(predictions, labels)
+
+            # 3. Zero the gradients of the optimizer
+            optimizer.zero_grad()
+
+            # 4. Perform a backward pass (calling .backward())
+            current_loss.backward()
+
+            # 5. Step the weights of the model via the optimizer (.step())
+            optimizer.step()
+
+            # 6. Add the current loss to the running loss
+            running_loss += current_loss
+
+        # Evaluate the model
+        acc = evaluate(model, dataloader_valid, index_map)
+
+        print(f"Epoch: {epoch} - Accuracy: {acc}")
 
 
 def run_snli_lstm():
