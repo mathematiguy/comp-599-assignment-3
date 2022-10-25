@@ -366,8 +366,8 @@ def run_char_lstm():
 
 def fix_padding(batch_premises, batch_hypotheses):
 
-    batch_premises = [torch.tensor(premise) for premise in batch_premises]
-    batch_hypotheses = [torch.tensor(hypothesis) for hypothesis in batch_hypotheses]
+    batch_premises = [torch.tensor(premise, dtype=torch.int32) for premise in batch_premises]
+    batch_hypotheses = [torch.tensor(hypothesis, dtype=torch.int32) for hypothesis in batch_hypotheses]
 
     batch_premises_reversed = [toks.flip(dims=(0,)) for toks in batch_premises]
     batch_hypotheses_reversed = [toks.flip(dims=(0,)) for toks in batch_hypotheses]
