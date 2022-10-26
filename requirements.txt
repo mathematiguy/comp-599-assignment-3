@@ -8,3 +8,4 @@ pandas
 matplotlib
 datasets
 tqdm
+requests==2.28.1
