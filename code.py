@@ -1,5 +1,6 @@
 import pdb
 import re
+import sys
 import random
 import numpy as np
 import pandas as pd
@@ -106,9 +107,9 @@ class CharSeqDataloader:
         target_seq = self.convert_seq_to_indices(target_string)
 
         # Return as int tensors
-        yield torch.tensor(in_seq, dtype=torch.int32), torch.tensor(
+        yield torch.tensor(in_seq, dtype=torch.int32).to(device), torch.tensor(
             target_seq, dtype=torch.int32
-        )
+        ).to(device)
 
 
 class CharRNN(nn.Module):
@@ -121,7 +122,7 @@ class CharRNN(nn.Module):
         self.embedding_size = embedding_size
 
         # Initialise layers
-        self.hidden = torch.zeros(self.hidden_size)
+        self.hidden = torch.zeros(self.hidden_size).to(device)
         self.embedding_layer = nn.Embedding(self.n_chars, self.embedding_size)
         self.waa = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
         self.wax = nn.Linear(self.embedding_size, self.hidden_size, bias=True)
@@ -161,7 +162,7 @@ class CharRNN(nn.Module):
 
     # Old rnn_cell based sample_sequence
     def sample_sequence(self, starting_char, seq_len, temp=0.5):
-        generated_seq = torch.tensor([starting_char])
+        generated_seq = torch.tensor([starting_char]).to(device)
         embedded = self.embedding_layer(generated_seq)
         hidden = self.hidden
 
@@ -202,9 +203,9 @@ class CharLSTM(nn.Module):
     def forward(self, input_seq, hidden=None, cell=None):
         # Initialise hidden + cell state
         if hidden == None:
-            hidden = torch.zeros(self.hidden_size)
+            hidden = torch.zeros(self.hidden_size).to(device)
         if cell == None:
-            cell = torch.zeros(self.hidden_size)
+            cell = torch.zeros(self.hidden_size).to(device)
 
         # Embed the input sequence
         input_seq = self.embedding_layer(input_seq)
@@ -255,7 +256,7 @@ class CharLSTM(nn.Module):
         hidden = None
         cell = None
         for _ in range(seq_len):
-            out, hidden, cell = self.forward(torch.tensor(generated_seq), hidden, cell)
+            out, hidden, cell = self.forward(torch.tensor(generated_seq).to(device), hidden, cell)
             char_probs = F.softmax(out[-1] / temp, dim=0)
             generated_seq.append(Categorical(probs=char_probs).sample().tolist())
         return generated_seq
@@ -271,6 +272,7 @@ def train(model, dataset, lr, out_seq_len, num_epochs, sample_file):
         *Counter([ch for ch in dataset.text if re.match("[A-Z]", ch)]).items()
     )
 
+    print("Starting model train..")
     n = 0
     running_loss = 0
     with open(sample_file, 'w') as f:
@@ -296,21 +298,21 @@ def train(model, dataset, lr, out_seq_len, num_epochs, sample_file):
 
                 n += 1
 
-            # print info every X examples
-                f.write(f"Epoch {epoch}. Running loss so far: {(running_loss/n):.8f}\n")
+            # f.write info every X examples
+            f.write(f"Epoch {epoch}. Running loss so far: {(running_loss/n):.8f}\n")
 
-                f.write("\n-------------SAMPLE FROM MODEL-------------\n")
+            f.write("\n-------------SAMPLE FROM MODEL-------------\n")
 
-                # code to sample a sequence from your model randomly
-                with torch.no_grad():
-                    starting_char = random.choices(
-                        starting_chars, weights=starting_char_counts, k=1
-                    )
-                    starting_char = dataset.convert_seq_to_indices(starting_char)[0]
-                    generated_seq = model.sample_sequence(starting_char, out_seq_len, temp=0.9)
-                    f.write("".join(dataset.convert_indices_to_seq(generated_seq)))
+            # code to sample a sequence from your model randomly
+            with torch.no_grad():
+                starting_char = random.choices(
+                    starting_chars, weights=starting_char_counts, k=1
+                )
+                starting_char = dataset.convert_seq_to_indices(starting_char)[0]
+                generated_seq = model.sample_sequence(starting_char, out_seq_len, temp=0.9)
+                f.write("".join(dataset.convert_indices_to_seq(generated_seq)))
 
-                f.write("\n------------/SAMPLE FROM MODEL/------------\n")
+            f.write("\n------------/SAMPLE FROM MODEL/------------\n")
 
             n = 0
             running_loss = 0
@@ -334,12 +336,14 @@ def run_char_rnn(
     dataset = CharSeqDataloader(
         filepath=data_path, seq_len=seq_len, examples_per_epoch=epoch_size
     )
+
+    print("Initializing CharRNN...")
     model = CharRNN(
         n_chars=len(dataset.unique_chars),
         embedding_size=embedding_size,
         hidden_size=hidden_size,
     )
-
+    model.to(device)
     # Train the model
     train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs, sample_file=sample_file)
 
@@ -365,6 +369,7 @@ def run_char_lstm(
         embedding_size=embedding_size,
         hidden_size=hidden_size,
     )
+    model.to(device)
 
     train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs, sample_file=sample_file)
 
@@ -384,10 +389,10 @@ def fix_padding(batch_premises, batch_hypotheses):
     batch_hypotheses_reversed = pad_sequence(batch_hypotheses_reversed, batch_first=True)
 
     return (
-        batch_premises,
-        batch_hypotheses,
-        batch_premises_reversed,
-        batch_hypotheses_reversed,
+        batch_premises.to(device),
+        batch_hypotheses.to(device),
+        batch_premises_reversed.to(device),
+        batch_hypotheses_reversed.to(device),
     )
 
 
@@ -403,7 +408,7 @@ def create_embedding_matrix(word_index, emb_dict, emb_dim):
 
     embeds = [torch.tensor(emb_dict[ix_to_word[i]], dtype=torch.float32) for i in range(len(word_index))]
 
-    return torch.stack(embeds)
+    return torch.stack(embeds).to(device)
 
 
 def evaluate(model, dataloader, index_map):
@@ -545,13 +550,7 @@ def run_snli(model):
 
     # training code
     embedding_matrix = create_embedding_matrix(index_map, emb_dict, emb_dim)
-
-    model = UniLSTM(
-        vocab_size=len(index_map),
-        hidden_dim=emb_dim,
-        num_layers=num_layers,
-        num_classes=num_classes,
-    )
+    model.to(device)
 
     lr = 0.001
 
@@ -595,24 +594,40 @@ def run_snli(model):
 
 
 def run_snli_lstm():
-    model_class = (
-        ""
-    )  # fill in the classs name of the model (to initialize within run_snli)
+
+    model = UniLSTM(
+        vocab_size=len(index_map),
+        hidden_dim=emb_dim,
+        num_layers=num_layers,
+        num_classes=num_classes,
+    )
     run_snli(model_class)
 
 
 def run_snli_bilstm():
-    model_class = (
-        ""
-    )  # fill in the classs name of the model (to initialize within run_snli)
+
+    model = ShallowBiLSTM(
+        vocab_size=len(index_map),
+        hidden_dim=emb_dim,
+        num_layers=num_layers,
+        num_classes=num_classes,
+    )
     run_snli(model_class)
 
 
 if __name__ == "__main__":
 
-    run_char_rnn()
-    run_char_lstm()
+    print("Run char_rnn")
+    run_char_rnn(sample_file='stdout')
+
+    print("Run char_lstm")
+    run_char_lstm(sample_file='stdout')
+
+    print("Run snli_lstm")
     run_snli_lstm()
+
+    print("Run snli_bilstm")
     run_snli_bilstm()
 
     print("Done!")
+
