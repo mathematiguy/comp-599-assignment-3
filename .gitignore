@@ -130,3 +130,8 @@ dmypy.json
 /data/glove/
 /.bash_history
 /.python_history
+/data/Sherlock_CharRNN.txt
+/data/Shakespeare_CharRNN.txt
+/data/Shakespeare_CharLSTM.txt
+/.local/
+/.jupyter/
