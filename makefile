@@ -10,7 +10,7 @@ DOCKER_ARGS ?=
 
 .PHONY: docker docker-push docker-pull enter enter-root
 
-run: code.py
+run: code.py data/glove/glove.6B.300d.txt
 	${RUN} python $<
 
 data/glove/glove.6B.300d.txt:
