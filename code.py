@@ -261,7 +261,7 @@ class CharLSTM(nn.Module):
         return generated_seq
 
 
-def train(model, dataset, lr, out_seq_len, num_epochs):
+def train(model, dataset, lr, out_seq_len, num_epochs, sample_file):
 
     # code to initialize optimizer, loss function
     optimizer = model.get_optimizer(lr=lr)
@@ -273,59 +273,62 @@ def train(model, dataset, lr, out_seq_len, num_epochs):
 
     n = 0
     running_loss = 0
-    for epoch in range(num_epochs):
-        for in_seq, out_seq in dataset.get_example():
-            # 1. Apply the RNN to the incoming sequence
-            pred_seq, *_ = model.forward(in_seq)
+    with open(sample_file, 'w') as f:
+        for epoch in range(num_epochs):
+            for in_seq, out_seq in dataset.get_example():
+                # 1. Apply the RNN to the incoming sequence
+                pred_seq, *_ = model.forward(in_seq)
 
-            # 2. Use the loss function to calculate the loss on the model’s output
-            current_loss = loss_func(pred_seq, out_seq.long())
+                # 2. Use the loss function to calculate the loss on the model’s output
+                current_loss = loss_func(pred_seq, out_seq.long())
 
-            # 3. Zero the gradients of the optimizer
-            optimizer.zero_grad()
+                # 3. Zero the gradients of the optimizer
+                optimizer.zero_grad()
 
-            # 4. Perform a backward pass (calling .backward())
-            current_loss.backward()
+                # 4. Perform a backward pass (calling .backward())
+                current_loss.backward()
 
-            # 5. Step the weights of the model via the optimizer (.step())
-            optimizer.step()
+                # 5. Step the weights of the model via the optimizer (.step())
+                optimizer.step()
 
-            # 6. Add the current loss to the running loss
-            running_loss += current_loss
+                # 6. Add the current loss to the running loss
+                running_loss += current_loss
 
-            n += 1
+                n += 1
 
-        # print info every X examples
-        print(f"Epoch {epoch}. Running loss so far: {(running_loss/n):.8f}")
+            # print info every X examples
+                f.write(f"Epoch {epoch}. Running loss so far: {(running_loss/n):.8f}\n")
 
-        print("\n-------------SAMPLE FROM MODEL-------------")
+                f.write("\n-------------SAMPLE FROM MODEL-------------\n")
 
-        # code to sample a sequence from your model randomly
-        with torch.no_grad():
-            starting_char = random.choices(
-                starting_chars, weights=starting_char_counts, k=1
-            )
-            starting_char = dataset.convert_seq_to_indices(starting_char)[0]
-            generated_seq = model.sample_sequence(starting_char, out_seq_len, temp=0.9)
-            print("".join(dataset.convert_indices_to_seq(generated_seq)))
+                # code to sample a sequence from your model randomly
+                with torch.no_grad():
+                    starting_char = random.choices(
+                        starting_chars, weights=starting_char_counts, k=1
+                    )
+                    starting_char = dataset.convert_seq_to_indices(starting_char)[0]
+                    generated_seq = model.sample_sequence(starting_char, out_seq_len, temp=0.9)
+                    f.write("".join(dataset.convert_indices_to_seq(generated_seq)))
 
-        print("\n------------/SAMPLE FROM MODEL/------------")
+                f.write("\n------------/SAMPLE FROM MODEL/------------\n")
 
-        n = 0
-        running_loss = 0
+            n = 0
+            running_loss = 0
 
     return None  # return model optionally
 
 
-def run_char_rnn():
-    hidden_size = 512
-    embedding_size = 300
-    seq_len = 100
-    lr = 0.002
-    num_epochs = 100
-    epoch_size = 10  # one epoch is this # of examples
-    out_seq_len = 200
-    data_path = "./data/shakespeare.txt"
+def run_char_rnn(
+        hidden_size = 512,
+        embedding_size = 300,
+        seq_len = 100,
+        lr = 0.002,
+        num_epochs = 100,
+        epoch_size = 10,  # one epoch is this # of examples
+        out_seq_len = 200,
+        data_path = "./data/shakespeare.txt",
+        sample_file='./data/Shakespeare_CharRNN.txt'
+    ):
 
     # code to initialize dataloader, model
     dataset = CharSeqDataloader(
@@ -338,18 +341,20 @@ def run_char_rnn():
     )
 
     # Train the model
-    train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
+    train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs, sample_file=sample_file)
 
 
-def run_char_lstm():
-    hidden_size = 512
-    embedding_size = 300
-    seq_len = 100
-    lr = 0.002
-    num_epochs = 100
-    epoch_size = 10
-    out_seq_len = 200
-    data_path = "./data/shakespeare.txt"
+def run_char_lstm(
+        hidden_size = 512,
+        embedding_size = 300,
+        seq_len = 100,
+        lr = 0.002,
+        num_epochs = 100,
+        epoch_size = 10,
+        out_seq_len = 200,
+        data_path = "./data/shakespeare.txt",
+        sample_file='./data/Shakespeare_CharLSTM.txt'
+):
 
     # code to initialize dataloader, model
     dataset = CharSeqDataloader(
@@ -361,7 +366,7 @@ def run_char_lstm():
         hidden_size=hidden_size,
     )
 
-    train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs)
+    train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs, sample_file=sample_file)
 
 
 def fix_padding(batch_premises, batch_hypotheses):
@@ -415,10 +420,7 @@ def evaluate(model, dataloader, index_map):
              batch_hypotheses = tokens_to_ix(hypotheses, index_map)
 
              # 1. Apply the RNN to the incoming sequence
-             try:
-                 predictions = model.forward(batch_premises, batch_hypotheses)
-             except RuntimeError:
-                 pdb.set_trace()
+             predictions = model.forward(batch_premises, batch_hypotheses)
 
              # 2. Count the correct labels
              predicted_labels = torch.argmax(predictions, axis=1)
@@ -608,9 +610,9 @@ def run_snli_bilstm():
 
 if __name__ == "__main__":
 
-    # run_char_rnn()
-    # run_char_lstm()
+    run_char_rnn()
+    run_char_lstm()
     run_snli_lstm()
-    # run_snli_bilstm()
+    run_snli_bilstm()
 
     print("Done!")
