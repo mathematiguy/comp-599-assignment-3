@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update
