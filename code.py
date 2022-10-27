@@ -258,7 +258,9 @@ class CharLSTM(nn.Module):
         hidden = None
         cell = None
         for _ in range(seq_len):
-            out, hidden, cell = self.forward(torch.tensor(generated_seq).to(device), hidden, cell)
+            out, hidden, cell = self.forward(
+                torch.tensor(generated_seq).to(device), hidden, cell
+            )
             char_probs = F.softmax(out[-1] / temp, dim=0)
             generated_seq.append(Categorical(probs=char_probs).sample().tolist())
         return generated_seq
@@ -278,7 +280,7 @@ def train(model, dataset, lr, out_seq_len, num_epochs, sample_file):
     print("Starting model train..")
     n = 0
     running_loss = 0
-    with open(sample_file, 'w') as f:
+    with open(sample_file, "w") as f:
         for epoch in tqdm(range(num_epochs)):
             for in_seq, out_seq in dataset.get_example():
                 # 1. Apply the RNN to the incoming sequence
@@ -314,7 +316,9 @@ def train(model, dataset, lr, out_seq_len, num_epochs, sample_file):
                     starting_chars, weights=starting_char_counts, k=1
                 )
                 starting_char = dataset.convert_seq_to_indices(starting_char)[0]
-                generated_seq = model.sample_sequence(starting_char, out_seq_len, temp=0.9)
+                generated_seq = model.sample_sequence(
+                    starting_char, out_seq_len, temp=0.9
+                )
                 f.write("".join(dataset.convert_indices_to_seq(generated_seq)))
 
             f.write("\n------------/SAMPLE FROM MODEL/------------\n")
@@ -326,16 +330,16 @@ def train(model, dataset, lr, out_seq_len, num_epochs, sample_file):
 
 
 def run_char_rnn(
-        hidden_size = 512,
-        embedding_size = 300,
-        seq_len = 100,
-        lr = 0.002,
-        num_epochs = 100,
-        epoch_size = 100,
-        out_seq_len = 200,
-        data_path = "./data/shakespeare.txt",
-        sample_file='./data/Shakespeare_CharRNN.txt'
-    ):
+    hidden_size=512,
+    embedding_size=300,
+    seq_len=100,
+    lr=0.002,
+    num_epochs=100,
+    epoch_size=100,
+    out_seq_len=200,
+    data_path="./data/shakespeare.txt",
+    sample_file="./data/Shakespeare_CharRNN.txt",
+):
 
     # code to initialize dataloader, model
     dataset = CharSeqDataloader(
@@ -350,19 +354,26 @@ def run_char_rnn(
     )
     model.to(device)
     # Train the model
-    train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs, sample_file=sample_file)
+    train(
+        model,
+        dataset,
+        lr=lr,
+        out_seq_len=out_seq_len,
+        num_epochs=num_epochs,
+        sample_file=sample_file,
+    )
 
 
 def run_char_lstm(
-        hidden_size = 512,
-        embedding_size = 300,
-        seq_len = 100,
-        lr = 0.002,
-        num_epochs = 100,
-        epoch_size = 100,
-        out_seq_len = 200,
-        data_path = "./data/shakespeare.txt",
-        sample_file='./data/Shakespeare_CharLSTM.txt'
+    hidden_size=512,
+    embedding_size=300,
+    seq_len=100,
+    lr=0.002,
+    num_epochs=100,
+    epoch_size=100,
+    out_seq_len=200,
+    data_path="./data/shakespeare.txt",
+    sample_file="./data/Shakespeare_CharLSTM.txt",
 ):
 
     # code to initialize dataloader, model
@@ -376,13 +387,24 @@ def run_char_lstm(
     )
     model.to(device)
 
-    train(model, dataset, lr=lr, out_seq_len=out_seq_len, num_epochs=num_epochs, sample_file=sample_file)
+    train(
+        model,
+        dataset,
+        lr=lr,
+        out_seq_len=out_seq_len,
+        num_epochs=num_epochs,
+        sample_file=sample_file,
+    )
 
 
 def fix_padding(batch_premises, batch_hypotheses):
 
-    batch_premises = [torch.tensor(premise, dtype=torch.int64) for premise in batch_premises]
-    batch_hypotheses = [torch.tensor(hypothesis, dtype=torch.int64) for hypothesis in batch_hypotheses]
+    batch_premises = [
+        torch.tensor(premise, dtype=torch.int64) for premise in batch_premises
+    ]
+    batch_hypotheses = [
+        torch.tensor(hypothesis, dtype=torch.int64) for hypothesis in batch_hypotheses
+    ]
 
     batch_premises_reversed = [toks.flip(dims=(0,)) for toks in batch_premises]
     batch_hypotheses_reversed = [toks.flip(dims=(0,)) for toks in batch_hypotheses]
@@ -391,7 +413,9 @@ def fix_padding(batch_premises, batch_hypotheses):
     batch_hypotheses = pad_sequence(batch_hypotheses, batch_first=True)
 
     batch_premises_reversed = pad_sequence(batch_premises_reversed, batch_first=True)
-    batch_hypotheses_reversed = pad_sequence(batch_hypotheses_reversed, batch_first=True)
+    batch_hypotheses_reversed = pad_sequence(
+        batch_hypotheses_reversed, batch_first=True
+    )
 
     return (
         batch_premises.to(device),
@@ -411,7 +435,10 @@ def create_embedding_matrix(word_index, emb_dict, emb_dim):
         except KeyError:
             emb_dict[word] = np.zeros(emb_dim)
 
-    embeds = [torch.tensor(emb_dict[ix_to_word[i]], dtype=torch.float32) for i in range(len(word_index))]
+    embeds = [
+        torch.tensor(emb_dict[ix_to_word[i]], dtype=torch.float32)
+        for i in range(len(word_index))
+    ]
 
     return torch.stack(embeds).to(device)
 
@@ -422,21 +449,21 @@ def evaluate(model, dataloader, index_map):
     num_correct = 0
     with torch.no_grad():
         for batch in dataloader:
-             premises, hypotheses, labels = batch.values()
-             premises = tokenize(premises)
-             hypotheses = tokenize(hypotheses)
-             labels = labels.to(device)
+            premises, hypotheses, labels = batch.values()
+            premises = tokenize(premises)
+            hypotheses = tokenize(hypotheses)
+            labels = labels.to(device)
 
-             batch_premises = tokens_to_ix(premises, index_map)
-             batch_hypotheses = tokens_to_ix(hypotheses, index_map)
+            batch_premises = tokens_to_ix(premises, index_map)
+            batch_hypotheses = tokens_to_ix(hypotheses, index_map)
 
-             # 1. Apply the RNN to the incoming sequence
-             predictions = model.forward(batch_premises, batch_hypotheses)
+            # 1. Apply the RNN to the incoming sequence
+            predictions = model.forward(batch_premises, batch_hypotheses)
 
-             # 2. Count the correct labels
-             predicted_labels = torch.argmax(predictions, axis=1)
-             num_correct += torch.sum(predicted_labels == labels).tolist()
-             num_datapoints += labels.shape[0]
+            # 2. Count the correct labels
+            predicted_labels = torch.argmax(predictions, axis=1)
+            num_correct += torch.sum(predicted_labels == labels).tolist()
+            num_datapoints += labels.shape[0]
 
     return num_correct / num_datapoints
 
@@ -487,7 +514,13 @@ class BiLSTM(nn.Module):
         self.num_layers = num_layers
         self.embedding_size = embedding_size
 
-        self.lstm = nn.LSTM(embedding_size, hidden_dim, num_layers=2, batch_first=True, bidirectional=True)
+        self.lstm = nn.LSTM(
+            embedding_size,
+            hidden_dim,
+            num_layers=2,
+            batch_first=True,
+            bidirectional=True,
+        )
         self.int_layer = nn.Linear(hidden_dim * 4, hidden_dim)
         self.out_layer = nn.Linear(hidden_dim, num_classes)
         self.embedding_layer = nn.Embedding(vocab_size, embedding_size, padding_idx=0)
@@ -527,8 +560,12 @@ class ShallowBiLSTM(nn.Module):
         self.embedding_size = embedding_size
         self.num_layers = num_layers
 
-        self.lstm_forward = nn.LSTM(embedding_size, hidden_dim, num_layers, batch_first=True)
-        self.lstm_backward = nn.LSTM(embedding_size, hidden_dim, num_layers, batch_first=True)
+        self.lstm_forward = nn.LSTM(
+            embedding_size, hidden_dim, num_layers, batch_first=True
+        )
+        self.lstm_backward = nn.LSTM(
+            embedding_size, hidden_dim, num_layers, batch_first=True
+        )
         self.int_layer = nn.Linear(hidden_dim * 4, hidden_dim)
         self.out_layer = nn.Linear(hidden_dim, num_classes)
         self.embedding_layer = nn.Embedding(vocab_size, embedding_size, padding_idx=0)
@@ -544,10 +581,16 @@ class ShallowBiLSTM(nn.Module):
         a_lstm_output, (a_lstm_h, a_lstm_c) = self.lstm_forward(a_embed)
         b_lstm_output, (b_lstm_h, b_lstm_c) = self.lstm_forward(b_embed)
 
-        a_rev_lstm_output, (a_rev_lstm_h, a_rev_lstm_c) = self.lstm_backward(a_rev_embed)
-        b_rev_lstm_output, (b_rev_lstm_h, b_rev_lstm_c) = self.lstm_backward(b_rev_embed)
+        a_rev_lstm_output, (a_rev_lstm_h, a_rev_lstm_c) = self.lstm_backward(
+            a_rev_embed
+        )
+        b_rev_lstm_output, (b_rev_lstm_h, b_rev_lstm_c) = self.lstm_backward(
+            b_rev_embed
+        )
 
-        cell_states = torch.cat((a_lstm_c, a_rev_lstm_c, b_lstm_c, b_rev_lstm_c), dim=2).squeeze(dim=0)
+        cell_states = torch.cat(
+            (a_lstm_c, a_rev_lstm_c, b_lstm_c, b_rev_lstm_c), dim=2
+        ).squeeze(dim=0)
         int_output = nn.ReLU()(self.int_layer(cell_states))
         output = self.out_layer(int_output)
 
@@ -577,7 +620,11 @@ def load_snli_dataset(batch_size):
 
     # Filter data points with missing labels
     train_filtered = dataset["train"].filter(lambda ex: ex["label"] != -1)
-    valid_filtered = dataset["validation"].filter(lambda ex: ex["label"] != -1).filter(lambda ex: len(ex["premise"]) > 0)
+    valid_filtered = (
+        dataset["validation"]
+        .filter(lambda ex: ex["label"] != -1)
+        .filter(lambda ex: len(ex["premise"]) > 0)
+    )
     test_filtered = dataset["test"].filter(lambda ex: ex["label"] != -1)
 
     # Create dataloaders
@@ -588,9 +635,24 @@ def load_snli_dataset(batch_size):
     return (emb_dict, emb_dim), (dataloader_train, dataloader_valid, dataloader_test)
 
 
-def run_snli(model_class, vocab_size=None, num_epochs=10, hidden_dim=512, embedding_size=50, num_layers=1,  batch_size=32, num_classes=3, use_glove=False, lr=0.001):
+def run_snli(
+    model_class,
+    vocab_size=None,
+    num_epochs=10,
+    hidden_dim=512,
+    embedding_size=50,
+    num_layers=1,
+    batch_size=32,
+    num_classes=3,
+    use_glove=False,
+    lr=0.001,
+):
 
-    (emb_dict, emb_dim), (dataloader_train, dataloader_valid, dataloader_test) = load_snli_dataset(batch_size=batch_size)
+    (emb_dict, emb_dim), (
+        dataloader_train,
+        dataloader_valid,
+        dataloader_test,
+    ) = load_snli_dataset(batch_size=batch_size)
 
     # code to make dataloaders
     word_counts = build_word_counts(dataloader_train)
@@ -601,22 +663,26 @@ def run_snli(model_class, vocab_size=None, num_epochs=10, hidden_dim=512, embedd
         hidden_dim=hidden_dim,
         embedding_size=emb_dim,
         num_layers=num_layers,
-        num_classes=num_classes
+        num_classes=num_classes,
     )
     model.to(device)
 
     if use_glove:
-        embedding_matrix = create_embedding_matrix(index_map, emb_dict, emb_dim).to(device)
+        embedding_matrix = create_embedding_matrix(index_map, emb_dict, emb_dim).to(
+            device
+        )
 
         # Initialise the embedding layer with the pre-trained Glove embeddings
-        model.embedding_layer = model.embedding_layer.from_pretrained(embedding_matrix, freeze=False, padding_idx=0)
+        model.embedding_layer = model.embedding_layer.from_pretrained(
+            embedding_matrix, freeze=False, padding_idx=0
+        )
 
     # code to initialize optimizer, loss function
     optimizer = model.get_optimizer(lr=lr)
     loss_func = model.get_loss_function()
 
     n = 0
-    progress = {'train':[], 'valid':[], 'test':[]}
+    progress = {"train": [], "valid": [], "test": []}
     running_loss = 0
     for epoch in tqdm(range(num_epochs)):
         for batch in dataloader_train:
@@ -649,9 +715,9 @@ def run_snli(model_class, vocab_size=None, num_epochs=10, hidden_dim=512, embedd
         running_loss = 0
 
         # Evaluate the model
-        progress['train'].append(evaluate(model, dataloader_train, index_map))
-        progress['valid'].append(evaluate(model, dataloader_valid, index_map))
-        progress['test'].append(evaluate(model, dataloader_valid, index_map))
+        progress["train"].append(evaluate(model, dataloader_train, index_map))
+        progress["valid"].append(evaluate(model, dataloader_valid, index_map))
+        progress["test"].append(evaluate(model, dataloader_valid, index_map))
 
     return progress
 
